@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Study Tracker</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>📚 Study Tracker with Rewards 🎯</h1>
+
+    <section class="points">
+      <p>Total Points: <span id="points">0</span></p>
+    </section>
+
+    <section class="task-form">
+      <h2>Add a New Task</h2>
+      <input type="text" id="task-title" placeholder="Task title" required />
+      <textarea id="task-desc" placeholder="Task description"></textarea>
+      <input type="number" id="task-points" placeholder="Points" min="1" value="10" />
+      <button onclick="addTask()">Add Task</button>
+    </section>
+
+    <section class="task-list">
+      <h2>Your Tasks</h2>
+      <ul id="task-container"></ul>
+    </section>
+
+    <section class="rewards">
+      <h2>Available Rewards</h2>
+      <ul id="reward-container"></ul>
+    </section>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
