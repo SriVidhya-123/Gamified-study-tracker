@@ -1,98 +1,92 @@
-const userId = 1;
+const userId = 1; // static for now
 
-function loadTasks() {
+function fetchTasks() {
   fetch(`http://localhost:3000/tasks/${userId}`)
     .then(res => res.json())
-    .then(data => {
-      const taskList = document.getElementById('task-container');
+    .then(tasks => {
+      const taskList = document.getElementById('taskList');
       taskList.innerHTML = '';
-      data.forEach(task => {
+      let total = 0;
+
+      tasks.forEach(task => {
         const li = document.createElement('li');
-        li.innerHTML = `
-          <strong>${task.title}</strong> - ${task.points} pts
-          <br>${task.description || ''}
-          <br>Status: ${task.is_completed ? '✅ Completed' : '<button onclick="completeTask(' + task.id + ',' + task.points + ')">Mark Complete</button>'}
-        `;
-        if (task.is_completed) li.classList.add('completed');
+        li.innerHTML = `${task.title} - ${task.points} points`;
+
+        if (!task.is_completed) {
+          const btn = document.createElement('button');
+          btn.innerText = 'Complete';
+          btn.onclick = () => completeTask(task.id);
+          li.appendChild(btn);
+        } else {
+          total += task.points;
+          li.style.textDecoration = 'line-through';
+        }
+
         taskList.appendChild(li);
       });
+
+      document.getElementById('totalPoints').innerText = total;
     });
 }
 
-function loadPoints() {
-  fetch(`http://localhost:3000/tasks/${userId}`)
+function addTask() {
+  const title = document.getElementById('taskTitle').value;
+  const points = document.getElementById('taskPoints').value;
+
+  fetch('http://localhost:3000/tasks', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: userId, title, points })
+  })
     .then(res => res.json())
-    .then(data => {
-      const points = data
-        .filter(task => task.is_completed)
-        .reduce((sum, task) => sum + task.points, 0);
-      document.getElementById('points').innerText = points;
+    .then(() => {
+      document.getElementById('taskTitle').value = '';
+      document.getElementById('taskPoints').value = '';
+      fetchTasks();
     });
 }
 
-function loadRewards() {
-  fetch(`http://localhost:3000/rewards`)
+function completeTask(taskId) {
+  fetch(`http://localhost:3000/tasks/complete/${taskId}`, {
+    method: 'PUT'
+  })
     .then(res => res.json())
-    .then(data => {
-      const rewardList = document.getElementById('reward-container');
+    .then(() => fetchTasks());
+}
+
+function fetchRewards() {
+  fetch('http://localhost:3000/rewards')
+    .then(res => res.json())
+    .then(rewards => {
+      const rewardList = document.getElementById('rewardList');
       rewardList.innerHTML = '';
-      data.forEach(reward => {
+      rewards.forEach(reward => {
         const li = document.createElement('li');
-        li.innerHTML = `
-          🎁 ${reward.name} - ${reward.required_points} pts
-          <br>${reward.description}
-          <br><button onclick="claimReward(${reward.id}, ${reward.required_points})">Claim</button>
-        `;
+        li.innerHTML = `${reward.title} - Cost: ${reward.cost} points`;
+
+        const btn = document.createElement('button');
+        btn.innerText = 'Claim';
+        btn.onclick = () => claimReward(reward.id);
+        li.appendChild(btn);
+
         rewardList.appendChild(li);
       });
     });
 }
 
-function addTask() {
-  const title = document.getElementById('task-title').value;
-  const description = document.getElementById('task-desc').value;
-  const points = parseInt(document.getElementById('task-points').value);
-
-  fetch('http://localhost:3000/tasks', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ user_id: userId, title, description, points })
-  })
-  .then(res => res.json())
-  .then(() => {
-    loadTasks();
-    document.getElementById('task-title').value = '';
-    document.getElementById('task-desc').value = '';
-    document.getElementById('task-points').value = 10;
-  });
-}
-
-function completeTask(taskId, points) {
-  fetch(`http://localhost:3000/tasks/complete/${taskId}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ user_id: userId, points })
-  })
-  .then(res => res.json())
-  .then(() => {
-    loadTasks();
-    loadPoints();
-  });
-}
-
-function claimReward(rewardId, requiredPoints) {
+function claimReward(rewardId) {
   fetch('http://localhost:3000/rewards/claim', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ user_id: userId, reward_id: rewardId, required_points: requiredPoints })
+    body: JSON.stringify({ user_id: userId, reward_id: rewardId })
   })
-  .then(res => res.json())
-  .then(data => {
-    alert(data.message);
-    loadPoints();
-  });
+    .then(res => res.json())
+    .then(() => {
+      alert('Reward claimed!');
+      fetchTasks();
+    });
 }
 
-loadTasks();
-loadPoints();
-loadRewards();
+fetchTasks();
+fetchRewards();
+
